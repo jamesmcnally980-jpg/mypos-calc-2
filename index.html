@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>myPOS Savings Calculator</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0071F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="myPOS Calc">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root{
+    --blue:#0071F3;
+    --blue-deep:#0055B8;
+    --blue-dark:#003C82;
+    --card:#FFFFFF;
+    --ink:#0A2540;
+    --muted:#5B7290;
+    --faint:#93A9C4;
+    --red:#E8253F;
+    --green:#0AA574;
+    --line:#E3EBF5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{background:var(--blue);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100%}
+  .wrap{max-width:480px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px 48px}
+
+  header{padding:8px 0 16px;text-align:center}
+  header img{width:76px;height:76px;border-radius:19px;box-shadow:0 8px 24px rgba(0,40,100,.35)}
+  header h1{font-size:19px;font-weight:800;letter-spacing:-.3px;color:#fff;margin-top:10px}
+  header p{color:#BFDBFF;font-size:13px;margin-top:5px;font-weight:500}
+
+  .panel{background:var(--card);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 16px rgba(0,40,100,.18)}
+  .panel label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  .money-input{display:flex;align-items:center;background:#F2F7FD;border:2px solid var(--line);border-radius:12px;padding:0 14px;transition:border-color .15s}
+  .money-input:focus-within{border-color:var(--blue)}
+  .money-input .sym{font-size:24px;font-weight:800;color:var(--blue)}
+  .money-input .sym.l{margin-right:6px}
+  .money-input .sym.r{margin-left:6px}
+  .money-input input{flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:26px;font-weight:800;padding:11px 0;width:100%;font-variant-numeric:tabular-nums}
+  .money-input input::placeholder{color:#B9CBE0;font-weight:700}
+  .text-input{background:#F2F7FD;border:2px solid var(--line);border-radius:12px;padding:11px 14px;width:100%;font-size:16px;font-weight:600;color:var(--ink);outline:none;font-family:inherit}
+  .text-input:focus{border-color:var(--blue)}
+  .text-input::placeholder{color:#B9CBE0}
+
+  .quick{display:flex;gap:8px;margin-top:12px}
+  .quick button{flex:1;background:#F2F7FD;border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:700;padding:9px 0;border-radius:10px;cursor:pointer}
+  .quick button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+
+  .period-toggle{display:flex;background:#F2F7FD;border:1px solid var(--line);border-radius:10px;margin-top:12px;overflow:hidden}
+  .period-toggle button{flex:1;background:none;border:none;color:var(--muted);font-size:12.5px;font-weight:700;padding:9px 0;cursor:pointer}
+  .period-toggle button.active{background:var(--blue);color:#fff}
+
+  .mypos-line{display:none;justify-content:space-between;align-items:center;background:var(--green);border-radius:14px;padding:15px 16px;margin-bottom:16px;box-shadow:0 4px 16px rgba(6,120,86,.35)}
+  .mypos-line.show{display:flex}
+  .mypos-line .l{font-size:14px;font-weight:800;color:#fff}
+  .mypos-line .l small{display:block;font-weight:600;color:#C8F2E3;font-size:11px;margin-top:3px}
+  .mypos-line .v{text-align:right}
+  .mypos-line .v .mo{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff;line-height:1.05}
+  .mypos-line .v .c{font-size:10.5px;font-weight:700;color:#C8F2E3;text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+  .mypos-line .v .yr{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:#fff;margin-top:6px}
+
+  .section-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#CFE4FF;margin:0 2px 10px;display:none}
+  .section-label.show{display:block}
+
+  .provider{background:var(--card);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;box-shadow:0 2px 10px rgba(0,40,100,.14)}
+  .provider .name{font-size:16px;font-weight:800}
+  .provider .rate-tag{font-size:12px;color:var(--muted);font-weight:600}
+  .provider .their-fee{grid-column:1;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .provider .their-fee b{color:var(--ink)}
+  .provider .their-fee b.g{color:var(--green)}
+  .provider .save{grid-column:2;grid-row:1/3;text-align:right}
+  .provider .save .amt{font-size:24px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums;line-height:1.05}
+  .provider .save .amt-mo{font-size:16px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums;margin-top:6px}
+  .provider .save .cap{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+
+  .empty{color:#BFDBFF;text-align:center;padding:36px 20px;font-size:14px;font-weight:600;line-height:1.5}
+
+  .custom-result{display:none;margin-top:14px;padding:14px 16px;background:#F2F7FD;border-radius:12px}
+  .custom-result.show{display:block}
+  .cr-flex{display:flex;justify-content:space-between;align-items:center}
+  .cr-flex .fees{font-size:13px;color:var(--muted);font-weight:600;line-height:1.6}
+  .cr-flex .fees b{color:var(--ink)}
+  .cr-flex .fees b.g{color:var(--green)}
+  .cr-loss{text-align:right}
+  .cr-loss .yr{font-size:24px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums}
+  .cr-loss .mo{font-size:16px;font-weight:800;color:var(--red);font-variant-numeric:tabular-nums;margin-top:6px}
+  .cr-loss .c{font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+  .cr-beat{display:none;margin-top:10px;font-size:13px;font-weight:700;color:var(--blue)}
+
+  .followup{display:none}
+  .followup.show{display:block}
+  .followup select{background:#F2F7FD;border:2px solid var(--line);border-radius:12px;padding:11px 14px;width:100%;font-size:16px;font-weight:600;color:var(--ink);outline:none;font-family:inherit;margin-bottom:10px;-webkit-appearance:none;appearance:none}
+  .fu-preview{background:#F2F7FD;border-radius:12px;padding:13px 14px;font-size:14px;line-height:1.55;color:var(--ink);margin-top:12px;white-space:pre-wrap}
+  .fu-buttons{display:flex;gap:8px;margin-top:12px}
+  .fu-buttons a,.fu-buttons button{flex:1;text-align:center;text-decoration:none;font-size:13.5px;font-weight:700;padding:12px 0;border-radius:11px;cursor:pointer;border:none;font-family:inherit}
+  .fu-wa{background:#25D366;color:#fff}
+  .fu-sms{background:var(--blue);color:#fff}
+  .fu-copy{background:#F2F7FD;color:var(--ink);border:1px solid var(--line) !important}
+
+  footer{margin-top:22px;font-size:10.5px;color:#A9CBF5;line-height:1.5}
+  footer b{color:#DCEBFF}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.png" alt="myPOS logo">
+    <h1>Savings Calculator</h1>
+    <p>Enter their card takings. Show them what they're losing.</p>
+  </header>
+
+  <div class="panel">
+    <label for="turnover" id="turnover-label">Monthly card takings</label>
+    <div class="money-input">
+      <span class="sym l">£</span>
+      <input type="text" inputmode="decimal" id="turnover" placeholder="5,000" autocomplete="off">
+    </div>
+    <div class="quick" id="quick">
+      <button data-v="2000">£2k</button>
+      <button data-v="5000">£5k</button>
+      <button data-v="10000">£10k</button>
+      <button data-v="20000">£20k</button>
+    </div>
+    <div class="period-toggle" id="period">
+      <button data-p="day">Per day</button>
+      <button data-p="week">Per week</button>
+      <button data-p="month" class="active">Per month</button>
+      <button data-p="year">Per year</button>
+    </div>
+  </div>
+
+  <div class="mypos-line" id="mypos-line">
+    <div class="l">With myPOS at 0.3%<small>+ instant settlement, free 4G</small></div>
+    <div class="v">
+      <div class="mo" id="mypos-mo">£0</div><div class="c">per month</div>
+      <div class="yr" id="mypos-yr">£0</div><div class="c">per year</div>
+    </div>
+  </div>
+
+  <div class="section-label" id="results-label">What their percentage costs them</div>
+  <div id="results">
+    <div class="empty">Type in what they take on card<br>and every provider updates instantly.</div>
+  </div>
+
+  <div class="panel" id="custom-panel" style="display:none">
+    <label for="custom-rate">On a negotiated rate? Type it in</label>
+    <div class="money-input">
+      <input type="text" inputmode="decimal" id="custom-rate" placeholder="1.2" autocomplete="off" style="text-align:right">
+      <span class="sym r">%</span>
+    </div>
+    <div class="custom-result" id="custom-result">
+      <div class="cr-loss" style="text-align:center">
+        <div class="yr" id="cr-yr"></div><div class="c">paid per year</div>
+        <div class="mo" id="cr-mo"></div><div class="c">paid per month</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel followup" id="followup">
+    <label>Send them the numbers</label>
+    <input type="text" class="text-input" id="biz-name" placeholder="Their first name (optional)" autocomplete="off" style="margin-bottom:10px">
+    <select id="fu-provider"></select>
+    <div class="fu-preview" id="fu-preview"></div>
+    <div class="fu-buttons">
+      <a class="fu-wa" id="fu-wa" target="_blank" rel="noopener">WhatsApp</a>
+      <a class="fu-sms" id="fu-sms">Text</a>
+      <button class="fu-copy" id="fu-copy">Copy</button>
+    </div>
+  </div>
+
+  <div id="rates-stamp" style="text-align:center;font-size:11.5px;font-weight:700;color:#BFDBFF;margin-top:18px;cursor:pointer;padding:8px">Loading rates…</div>
+
+  <footer>
+    <b>Rates used:</b> SumUp 1.69% · Square 1.75% · Zettle 1.75% · Barclaycard 1.6% · Stripe 1.5% · Worldpay 1.5% · Tide 1.5% · Dojo 1.4% · Tyl by NatWest 1.39% · Revolut 0.8%. Headline percentage rates published for UK small businesses, checked July 2026 — always confirm the prospect's actual rate. Comparison is on percentage transaction fees only; monthly fees, per-transaction pence, hardware and account costs not included.
+  </footer>
+</div>
+
+<script>
+(function(){
+  // ── RATES SOURCE ────────────────────────────────────────────────
+  // Leave RATES_URL empty to use the rates.json sitting next to this file.
+  // Or paste a GitHub raw URL here to update rates without redeploying.
+  var RATES_URL = "";
+
+  // Fallback rates — used only if the rates file can't be loaded.
+  var providers = [
+    {name:"SumUp",        rate:1.69},
+    {name:"Square",       rate:1.75},
+    {name:"Zettle",       rate:1.75},
+    {name:"Dojo",         rate:1.4},
+    {name:"Worldpay",     rate:1.5},
+    {name:"Stripe",       rate:1.5},
+    {name:"Tide",         rate:1.5},
+    {name:"Barclaycard",  rate:1.6},
+    {name:"Tyl (NatWest)",rate:1.39},
+    {name:"Revolut",      rate:0.8}
+  ];
+  var lastChecked = null;
+
+  var MYPOS_RATE = 0.003;
+  var period = "month";
+
+  var input = document.getElementById("turnover");
+  var results = document.getElementById("results");
+  var resultsLabel = document.getElementById("results-label");
+  var myposLine = document.getElementById("mypos-line");
+  var customPanel = document.getElementById("custom-panel");
+  var customRate = document.getElementById("custom-rate");
+  var customResult = document.getElementById("custom-result");
+  var followup = document.getElementById("followup");
+  var fuPreview = document.getElementById("fu-preview");
+  var fuProvider = document.getElementById("fu-provider");
+  var bizName = document.getElementById("biz-name");
+  var turnoverLabel = document.getElementById("turnover-label");
+  var currentMsg = "";
+
+  // Build follow-up provider dropdown
+  function buildDropdown(){
+    var keep = fuProvider.value;
+    fuProvider.innerHTML = "";
+    providers.forEach(function(p, i){
+      var o = document.createElement("option");
+      o.value = i;
+      o.textContent = p.name + " (" + p.rate + "%)";
+      fuProvider.appendChild(o);
+    });
+    var oc = document.createElement("option");
+    oc.value = "custom";
+    oc.textContent = "Custom rate (from % box above)";
+    fuProvider.appendChild(oc);
+    if(keep) fuProvider.value = keep;
+  }
+  buildDropdown();
+
+  // Load rates from the rates file
+  function loadRates(force){
+    var url = (RATES_URL || "rates.json") + "?t=" + Date.now();
+    fetch(url, {cache: force ? "reload" : "default"})
+      .then(function(r){ if(!r.ok) throw new Error("no"); return r.json(); })
+      .then(function(data){
+        if(data && Array.isArray(data.providers) && data.providers.length){
+          providers = data.providers.filter(function(p){
+            return p && p.name && typeof p.rate === "number" && p.rate > 0;
+          });
+          lastChecked = data.last_checked || null;
+          try{ localStorage.setItem("myposRates", JSON.stringify(data)); }catch(e){}
+          buildDropdown();
+          updateStamp("live");
+          render();
+        }
+      })
+      .catch(function(){
+        // offline — try the last set we saved
+        try{
+          var cached = JSON.parse(localStorage.getItem("myposRates"));
+          if(cached && cached.providers){
+            providers = cached.providers;
+            lastChecked = cached.last_checked || null;
+            buildDropdown();
+            updateStamp("cached");
+            render();
+            return;
+          }
+        }catch(e){}
+        updateStamp("fallback");
+      });
+  }
+
+  function updateStamp(state){
+    var el = document.getElementById("rates-stamp");
+    if(!el) return;
+    var when = lastChecked ? new Date(lastChecked).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}) : "unknown";
+    if(state === "live")        el.textContent = "Rates updated " + when + " · tap to refresh";
+    else if(state === "cached") el.textContent = "Offline — using saved rates from " + when;
+    else                        el.textContent = "Using built-in rates · tap to refresh";
+  }
+
+  function fmt(n){ return "£" + n.toLocaleString("en-GB",{minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function fmtP(n){ return "£" + n.toLocaleString("en-GB",{minimumFractionDigits:n<100?2:0,maximumFractionDigits:n<100?2:0}); }
+
+  function parseInput(){
+    var v = parseFloat(input.value.replace(/[^0-9.]/g,""));
+    return isNaN(v) ? 0 : v;
+  }
+  function toMonthly(v){
+    if(period==="day") return v*365/12;
+    if(period==="week") return v*52/12;
+    if(period==="year") return v/12;
+    return v;
+  }
+  function getCustom(){
+    var c = parseFloat(customRate.value.replace(/[^0-9.]/g,""));
+    return (!isNaN(c) && c > 0) ? c : null;
+  }
+
+  function render(){
+    var monthly = toMonthly(parseInput());
+    var myposMonthly = monthly * MYPOS_RATE;
+
+    if(monthly <= 0){
+      results.innerHTML = '<div class="empty">Type in what they take on card<br>and every provider updates instantly.</div>';
+      resultsLabel.classList.remove("show");
+      myposLine.classList.remove("show");
+      customPanel.style.display = "none";
+      followup.classList.remove("show");
+      return;
+    }
+
+    document.getElementById("mypos-mo").textContent = fmtP(myposMonthly);
+    document.getElementById("mypos-yr").textContent = fmt(myposMonthly*12);
+    myposLine.classList.add("show");
+    resultsLabel.classList.add("show");
+    customPanel.style.display = "block";
+
+    var rows = providers.map(function(p){
+      var theirMonthly = monthly * (p.rate/100);
+      return {p:p, theirMonthly:theirMonthly, saveMonthly:theirMonthly - myposMonthly};
+    }).sort(function(a,b){ return b.theirMonthly - a.theirMonthly; });
+
+    var html = "";
+    rows.forEach(function(r){
+      html += '<div class="provider">'
+        + '<div><span class="name">'+r.p.name+'</span> <span class="rate-tag">'+r.p.rate+'%</span></div>'
+        + '<div class="save">'
+        +   '<div class="amt">'+fmt(r.theirMonthly*12)+'</div><div class="cap">paid per year</div>'
+        +   '<div class="amt-mo">'+fmtP(r.theirMonthly)+'</div><div class="cap">paid per month</div>'
+        + '</div>'
+        + '</div>';
+    });
+    results.innerHTML = html;
+
+    // custom rate box
+    var custom = getCustom();
+    if(custom !== null){
+      var theirC = monthly * (custom/100);
+      document.getElementById("cr-yr").textContent = fmt(theirC*12);
+      document.getElementById("cr-mo").textContent = fmtP(theirC);
+      customResult.classList.add("show");
+    } else {
+      customResult.classList.remove("show");
+    }
+
+    // follow-up message
+    var selName, selRate;
+    if(fuProvider.value === "custom"){
+      if(custom === null){
+        fuPreview.textContent = "Type their rate in the % box above to build the message.";
+        followup.classList.add("show");
+        currentMsg = "";
+        document.getElementById("fu-wa").removeAttribute("href");
+        document.getElementById("fu-sms").removeAttribute("href");
+        return;
+      }
+      selName = "your current provider";
+      selRate = custom;
+    } else {
+      var p = providers[parseInt(fuProvider.value,10)];
+      selName = p.name;
+      selRate = p.rate;
+    }
+    var theirMonthly = monthly * (selRate/100);
+    var name = bizName.value.trim();
+    var greeting = name ? "Hi " + name + ", " : "Hi, ";
+    currentMsg = greeting + "good speaking with you today. As promised: on roughly "
+      + fmt(monthly) + "/month card takings at " + selRate + "% with " + selName
+      + ", you're paying about " + fmtP(theirMonthly) + " a month — that's " + fmt(theirMonthly*12)
+      + " a year in card fees. myPOS is 0.3%, with your money settled instantly instead of next day. Happy to pop back and get you set up — when suits?";
+    fuPreview.textContent = currentMsg;
+    document.getElementById("fu-wa").href = "https://wa.me/?text=" + encodeURIComponent(currentMsg);
+    document.getElementById("fu-sms").href = "sms:&body=" + encodeURIComponent(currentMsg);
+    followup.classList.add("show");
+  }
+
+  customRate.addEventListener("input", render);
+  bizName.addEventListener("input", render);
+  fuProvider.addEventListener("change", render);
+
+  input.addEventListener("input", function(){
+    var caretFromEnd = input.value.length - input.selectionStart;
+    var raw = input.value.replace(/[^0-9.]/g,"");
+    var parts = raw.split(".");
+    var intPart = parts[0] ? parseInt(parts[0],10).toLocaleString("en-GB") : "";
+    input.value = intPart + (parts.length>1 ? "."+parts[1].slice(0,2) : "");
+    var pos = Math.max(0, input.value.length - caretFromEnd);
+    input.setSelectionRange(pos,pos);
+    document.querySelectorAll("#quick button").forEach(function(b){b.classList.remove("active");});
+    render();
+  });
+
+  document.querySelectorAll("#quick button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll("#quick button").forEach(function(b){b.classList.remove("active");});
+      btn.classList.add("active");
+      input.value = parseInt(btn.dataset.v,10).toLocaleString("en-GB");
+      render();
+    });
+  });
+
+  document.querySelectorAll("#period button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll("#period button").forEach(function(b){b.classList.remove("active");});
+      btn.classList.add("active");
+      period = btn.dataset.p;
+      turnoverLabel.textContent = period==="day" ? "Daily card takings" : period==="week" ? "Weekly card takings" : period==="year" ? "Yearly card takings" : "Monthly card takings";
+      render();
+    });
+  });
+
+  document.getElementById("rates-stamp").addEventListener("click", function(){
+    this.textContent = "Checking…";
+    loadRates(true);
+  });
+
+  loadRates(false);
+
+  document.getElementById("fu-copy").addEventListener("click", function(){
+    if(!currentMsg) return;
+    var btn = this;
+    var ta = document.createElement("textarea");
+    ta.value = currentMsg;
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand("copy"); btn.textContent = "Copied ✓"; }
+    catch(e){ btn.textContent = "Failed"; }
+    document.body.removeChild(ta);
+    setTimeout(function(){ btn.textContent = "Copy"; }, 1500);
+  });
+})();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "myPOS Savings Calculator",
+  "short_name": "myPOS Calc",
+  "description": "Show prospects what their card provider is costing them vs myPOS at 0.3%",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0071F3",
+  "theme_color": "#0071F3",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
