@@ -1,0 +1,36 @@
+name: Check card processor rates
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check rates
+        run: node scripts/check-rates.js
+
+      - name: Commit any changes
+        run: |
+          git config user.name "rate-bot"
+          git config user.email "rate-bot@users.noreply.github.com"
+          if git diff --quiet rates.json; then
+            echo "Nothing changed."
+          else
+            git add rates.json
+            git commit -m "Update card processor rates ($(date +%Y-%m-%d))"
+            git push
+          fi
