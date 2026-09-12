@@ -1,5 +1,5 @@
 {
-  "last_checked": "2026-09-11",
+  "last_checked": "2026-09-12",
   "note": "Edit this file to update rates everywhere. Every phone picks it up next time the app opens.",
   "providers": [
     {
@@ -12,13 +12,13 @@
       "name": "Square",
       "rate": 1.75,
       "source": "auto",
-      "checked": "2026-09-11"
+      "checked": "2026-09-12"
     },
     {
       "name": "Zettle",
       "rate": 1.75,
       "source": "auto",
-      "checked": "2026-09-11"
+      "checked": "2026-09-12"
     },
     {
       "name": "Barclaycard",
@@ -30,7 +30,7 @@
       "name": "Stripe",
       "rate": 1.5,
       "source": "auto",
-      "checked": "2026-09-11"
+      "checked": "2026-09-12"
     },
     {
       "name": "Worldpay",
