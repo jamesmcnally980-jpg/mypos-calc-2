@@ -361,7 +361,7 @@ function canAssign(person,sh,week,weekStart){
 function candidateScore(person,sh,week){
   const already=staffAssignedShifts(person.id,week);
   const currentHours=already.reduce((s,x)=>s+shiftHours(x),0);
-  let score=Math.abs(person.contractedHours-(currentHours+shiftHours(sh)));
+  let score=((currentHours+shiftHours(sh))/Math.max(person.contractedHours,1))*10;
   if(person.primary!==sh.dept) score+=3;
   const isLate=toMin(sh.end)<toMin(sh.start)+1440 && (toMin(sh.end)<=360 || toMin(sh.start)>=1700);
   const isWeekend = sh.day==="sat"||sh.day==="sun";
@@ -413,6 +413,23 @@ function regenerateWeek(weekStart,opts){
       sh.warnings.push(`Needs ${req.bar} bar-trained staff, only ${barCount} available.`);
     }
   });
+  // Top-up pass: give everyone still under their contracted hours extra shifts
+  // (overstaffing shifts by up to EXTRA_PER_SHIFT people) so nobody is left off the rota.
+  const EXTRA_PER_SHIFT=3;
+  const hoursOf=p=>staffAssignedShifts(p.id,week).reduce((a,x)=>a+shiftHours(x),0);
+  let guard=0, progressed=true;
+  while(progressed && guard++<2000){
+    progressed=false;
+    const needy=data.staff.filter(p=>hoursOf(p)<p.contractedHours)
+      .sort((a,b)=>hoursOf(a)/Math.max(a.contractedHours,1)-hoursOf(b)/Math.max(b.contractedHours,1));
+    for(const p of needy){
+      const options=week.shifts.filter(sh=>!sh.locked && !sh.bookingId && !sh.assigned.includes(p.id)
+        && sh.assigned.length<shiftRequirement(sh).total+EXTRA_PER_SHIFT && canAssign(p,sh,week,weekStart).ok)
+        .sort((a,b)=>(a.assigned.length-shiftRequirement(a).total)-(b.assigned.length-shiftRequirement(b).total)
+          +((p.primary===a.dept?0:2)-(p.primary===b.dept?0:2)));
+      if(options.length){ options[0].assigned.push(p.id); bumpCounters(p,options[0]); progressed=true; break; }
+    }
+  }
   week.generated=true;
   data.weeks[weekStart]=week;
   save();
