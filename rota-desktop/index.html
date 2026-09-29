@@ -641,6 +641,9 @@ function renderStaff(){
   const wrap=el("div",{class:"card"});
   wrap.appendChild(el("h2",{},["Staff"]));
   wrap.appendChild(el("button",{class:"btn",onclick:()=>{data.staff.push({id:uid(),name:"New Staff",departments:[],primary:"",barTrained:false,skills:[],contractedHours:20,maxHours:30,under18:false,unavailability:[],holidays:[]});save();render();}},["+ Add staff"]));
+  wrap.appendChild(el("button",{class:"btn secondary",style:"margin-left:6px",onclick:openBulkStaff},["📥 Bulk add / paste list"]));
+  wrap.appendChild(el("button",{class:"btn danger",style:"margin-left:6px",onclick:()=>{if(confirm("Remove ALL staff (including the sample people)?")){data.staff=[];save();render();}}},["Clear all staff"]));
+  wrap.appendChild(el("div",{class:"small-muted",style:"margin-top:6px"},[data.staff.length+" staff"]));
   const table=el("table",{class:"staff-table",style:"margin-top:10px"});
   table.appendChild(el("thead",{},[el("tr",{},["Name","Departments","Bar trained","Skills","Contracted hrs","Max hrs","Under 18","Unavailable","Holiday","" ].map(h=>el("th",{},[h])))]));
   const tbody=el("tbody",{});
@@ -670,6 +673,41 @@ function renderStaff(){
   table.appendChild(tbody);
   wrap.appendChild(table);
   return wrap;
+}
+function openBulkStaff(){
+  const bg=el("div",{class:"modal-bg",onclick:(e)=>{if(e.target===bg)bg.remove();}});
+  const modal=el("div",{class:"modal"});
+  modal.appendChild(el("span",{class:"closeX",onclick:()=>bg.remove()},["✕"]));
+  modal.appendChild(el("h3",{},["Bulk add staff"]));
+  modal.appendChild(el("div",{class:"small-muted",style:"margin-bottom:8px"},["One person per line (paste from Excel/Sheets works too). Format:\nName, departments, bar (y/n), contracted hrs, max hrs\nDepartments: b = breakfast, p = pub, m = meetings & events (e.g. bp). Everything after the name is optional — defaults: all departments, not bar-trained, 20h contracted, 30h max.\nExample: Sam Jones, bp, y, 30, 38"]));
+  const ta=el("textarea",{rows:14,style:"width:100%",placeholder:"Sam Jones, bp, y, 30, 38\nAlex Smith\n..."});
+  modal.appendChild(ta);
+  const replace=checkbox(false,()=>{});
+  modal.appendChild(el("label",{style:"display:flex;gap:6px;align-items:center;margin:8px 0;color:var(--ink)"},[replace,"Replace existing staff (removes the sample people)"]));
+  modal.appendChild(el("button",{class:"btn",onclick:()=>{
+    const added=[];
+    ta.value.split(/\r?\n/).forEach(line=>{
+      const parts=line.split(/[\t,;|]/).map(x=>x.trim());
+      if(!parts[0]) return;
+      const dtxt=(parts[1]||"").toLowerCase();
+      let depts=[];
+      if(dtxt){
+        if(dtxt.includes("b")) depts.push("breakfast");
+        if(dtxt.includes("p")) depts.push("pub");
+        if(dtxt.includes("m")||dtxt.includes("e")) depts.push("me");
+      }
+      if(!depts.length) depts=DEPTS.slice();
+      const contracted=Number(parts[3])||20;
+      added.push({id:uid(),name:parts[0],departments:depts,primary:depts[0],barTrained:/^(y|yes|true|1)/i.test(parts[2]||""),skills:[],contractedHours:contracted,maxHours:Number(parts[4])||Math.max(contracted+8,30),under18:false,unavailability:[],holidays:[]});
+    });
+    if(!added.length){alertMsg("Nothing to add.");return;}
+    if(replace.checked) data.staff=[];
+    data.staff=data.staff.concat(added);
+    save(); bg.remove(); render();
+    alertMsg("Added "+added.length+" staff.");
+  }},["Add staff"]));
+  bg.appendChild(modal);
+  document.body.appendChild(bg);
 }
 function textInput(val,onChange){ const i=el("input",{value:val,style:"width:110px",onchange:(e)=>onChange(e.target.value)}); return i; }
 function numInput(val,onChange){ const i=el("input",{type:"number",value:val,style:"width:60px",onchange:(e)=>onChange(Number(e.target.value))}); return i; }
