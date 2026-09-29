@@ -131,7 +131,7 @@ const DAYS=["mon","tue","wed","thu","fri","sat","sun"];
 const DAY_LABEL={mon:"Monday",tue:"Tuesday",wed:"Wednesday",thu:"Thursday",fri:"Friday",sat:"Saturday",sun:"Sunday"};
 const DEPTS=["breakfast","pub","me"];
 const DEPT_LABEL={breakfast:"Breakfast",pub:"Pub",me:"Meetings & Events"};
-const STORE_KEY="venueRotaData_v2";
+const STORE_KEY="venueRotaData_v3";
 
 function uid(){return Math.random().toString(36).slice(2,10);}
 function pad(n){return n<10?"0"+n:""+n;}
@@ -194,16 +194,30 @@ function defaultBusynessByDay(){
 }
 
 function sampleStaff(){
-  return [
-    {id:uid(),name:"Alexandra Fife",departments:["breakfast","pub"],primary:"pub",barTrained:true,skills:["supervisor"],contractedHours:32,maxHours:40,under18:false,unavailability:[],holidays:[]},
-    {id:uid(),name:"Becky Wagner",departments:["breakfast"],primary:"breakfast",barTrained:false,skills:["barista"],contractedHours:20,maxHours:25,under18:false,unavailability:[{day:"sun",start:"00:00",end:"23:59"}],holidays:[]},
-    {id:uid(),name:"Kellon Upton",departments:["pub"],primary:"pub",barTrained:true,skills:["first aid"],contractedHours:35,maxHours:40,under18:false,unavailability:[],holidays:[]},
-    {id:uid(),name:"Elliott Pratt",departments:["pub","me"],primary:"pub",barTrained:true,skills:["supervisor"],contractedHours:30,maxHours:38,under18:false,unavailability:[],holidays:[]},
-    {id:uid(),name:"Jade Coen",departments:["pub"],primary:"pub",barTrained:false,skills:["kitchen"],contractedHours:24,maxHours:30,under18:true,unavailability:[{day:"fri",start:"22:00",end:"23:59"}],holidays:[]},
-    {id:uid(),name:"Lindsay Powell",departments:["breakfast","me"],primary:"breakfast",barTrained:false,skills:["supervisor"],contractedHours:28,maxHours:35,under18:false,unavailability:[],holidays:[]},
-    {id:uid(),name:"Sophie Wagner",departments:["pub","breakfast"],primary:"pub",barTrained:true,skills:[],contractedHours:30,maxHours:36,under18:false,unavailability:[],holidays:[{start:addDays(mondayOf(fmtDate(new Date())),5),end:addDays(mondayOf(fmtDate(new Date())),6)}]},
-    {id:uid(),name:"Vanessa Boafo",departments:["me","pub"],primary:"me",barTrained:true,skills:["first aid"],contractedHours:25,maxHours:32,under18:false,unavailability:[],holidays:[]}
+  const mk=(name,o)=>Object.assign({id:uid(),name:name,departments:["breakfast","pub","me"],primary:"pub",barTrained:false,skills:[],contractedHours:20,maxHours:30,under18:false,unavailability:[],holidays:[]},o||{});
+  const mgmt=["Richard","Aude","Catherine","Bianka","Samantha","Kayleigh","Berri","Milly","Sonal","Luke","Sadie","DJ","Ashley","Lily"]
+    .map(n=>mk(n+" (F&B Mgmt)",{skills:["management"],contractedHours:40,maxHours:48}));
+  const team=[
+    mk("Alexandra Fife",{departments:["breakfast","pub"],barTrained:true,skills:["supervisor"],contractedHours:32,maxHours:40}),
+    mk("Alesia Akre"),mk("Amelia Turner-Berry"),
+    mk("Becky Wagner",{departments:["breakfast"],primary:"breakfast",skills:["barista"],unavailability:[{day:"sun",start:"00:00",end:"23:59"}]}),
+    mk("Candilce White"),mk("Chloe Mercer-Bambrick"),mk("Ciara Murphy"),mk("Cody Faulkner"),mk("Conor Rhodes"),mk("Dylan Elharj"),
+    mk("Elliott Pratt",{departments:["pub","me"],barTrained:true,skills:["supervisor"],contractedHours:30,maxHours:38}),
+    mk("Elli Griffin"),mk("Evan McInerey"),mk("Eve Cannon"),mk("Finley McDonnell"),mk("Freddie Pooler"),mk("Isabelia Wilcox"),mk("Jack Horsfield-Wykes"),
+    mk("Jade Coen",{departments:["pub"],skills:["kitchen"],contractedHours:24,under18:true}),
+    mk("James McNally"),
+    mk("Kellon Upton",{departments:["pub"],barTrained:true,skills:["first aid"],contractedHours:35,maxHours:40}),
+    mk("Kris Roscoe"),
+    mk("Lauren Convey (YP)",{under18:true}),
+    mk("Lindsay Powell",{departments:["breakfast","me"],primary:"breakfast",skills:["supervisor"],contractedHours:28,maxHours:35}),
+    mk("Lucia Chapman"),
+    mk("Lola Pooler (YP)",{under18:true}),
+    mk("Naeya Goodall"),mk("Oli Flassam"),mk("Rosie Johnson"),mk("Sasha Mariwandi"),
+    mk("Sophie Wagner",{barTrained:true,contractedHours:30,maxHours:36}),
+    mk("Sydney Hooper"),mk("Theelsa Wells"),mk("Thomas Munnelty"),mk("Tia O'Brien"),
+    mk("Vanessa Boafo",{primary:"me",barTrained:true,skills:["first aid"],contractedHours:25,maxHours:32})
   ];
+  return mgmt.concat(team);
 }
 function sampleBookings(){
   const wk=mondayOf(fmtDate(new Date()));
