@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Venue Rota Maker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1c1f24">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rota Maker">
 <style>
 :root{
   --breakfast:#f5c518; --breakfast-bg:#fff7d6; --breakfast-bd:#e0b400;
@@ -15,7 +21,8 @@
 }
 *{box-sizing:border-box;}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
-header.top{background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+header.top{background:var(--card);border-bottom:1px solid var(--line);padding:10px 16px;padding-left:max(16px,env(titlebar-area-x,16px));padding-right:max(16px,calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw) + 16px));-webkit-app-region:drag;app-region:drag;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:20;}
+header.top button{-webkit-app-region:no-drag;app-region:no-drag;}
 header.top h1{font-size:17px;margin:0;flex:1;min-width:160px;}
 nav.tabs{display:flex;gap:4px;flex-wrap:wrap;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:52px;z-index:19;overflow-x:auto;}
 nav.tabs button{border:none;background:none;padding:10px 12px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
@@ -100,6 +107,7 @@ th{background:#fafafa;position:sticky;top:0;}
     <button class="btn secondary small" id="weekPrev">◀ Prev week</button>
     <span id="weekLabel" style="font-weight:700;font-size:13px;"></span>
     <button class="btn secondary small" id="weekNext">Next week ▶</button>
+    <button class="btn small" id="installBtn" style="display:none">⬇️ Install app</button>
   </div>
 </header>
 <nav class="tabs no-print">
@@ -984,6 +992,21 @@ function handleChat(text){
   }
 
   return "I can tell you what's on, who's working, who's free, why a shift is short, move/add/remove someone from a shift, or generate the rota. Try one of the quick suggestions below.";
+}
+
+// ---------- install as desktop app ----------
+let installPrompt=null;
+const installBtn=document.getElementById("installBtn");
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;installBtn.style.display="";});
+installBtn.addEventListener("click",async()=>{
+  if(!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt=null; installBtn.style.display="none";
+});
+window.addEventListener("appinstalled",()=>{installBtn.style.display="none";});
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(function(){});});
 }
 
 // ---------- init ----------
